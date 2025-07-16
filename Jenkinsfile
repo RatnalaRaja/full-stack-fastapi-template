@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Clone Repo') {
             steps {
-                git branch: 'main', url: 'https://github.com/yourname/your-repo.git'
+                git branch: 'master', url: 'https://github.com/RatnalaRaja/full-stack-fastapi-template.gitt'
             }
         }
 
