@@ -2,30 +2,23 @@ pipeline {
     agent any
 
     environment {
-        BACKEND_IMAGE = "fastapi-backend"
-        FRONTEND_IMAGE = "fastapi-frontend"
+        BACKEND_IMAGE = "raja/fastapi-backend"
+        FRONTEND_IMAGE = "raja/fastapi-frontend"
     }
 
     stages {
-        stage('Clone Repo') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'master', url: 'https://github.com/RatnalaRaja/full-stack-fastapi-template.gitt'
-            }
-        }
-
-        stage('Build Frontend') {
-            steps {
-                dir('frontend') {
-                    sh 'npm install'
-                    sh 'npm run build'
-                }
+                git url: 'https://github.com/RatnalaRaja/full-stack-fastapi-template.git', branch: 'master'
             }
         }
 
         stage('Build Backend Docker Image') {
             steps {
                 dir('backend') {
-                    sh 'docker build -t $BACKEND_IMAGE .'
+                    script {
+                        sh 'docker build -t $BACKEND_IMAGE .'
+                    }
                 }
             }
         }
@@ -33,30 +26,21 @@ pipeline {
         stage('Build Frontend Docker Image') {
             steps {
                 dir('frontend') {
-                    sh 'docker build -t $FRONTEND_IMAGE .'
+                    script {
+                        sh 'docker build -t $FRONTEND_IMAGE .'
+                    }
                 }
             }
         }
 
-        stage('Run Containers') {
+        // Optional: Run containers (only for dev/test purposes)
+        stage('Run Containers (Optional)') {
             steps {
-                sh '''
-                docker rm -f fastapi-backend || true
-                docker rm -f fastapi-frontend || true
-
-                docker run -d --name fastapi-backend -p 8000:8000 fastapi-backend
-                docker run -d --name fastapi-frontend -p 80:80 fastapi-frontend
-                '''
+                script {
+                    sh 'docker run -d --name backend -p 8000:8000 $BACKEND_IMAGE'
+                    sh 'docker run -d --name frontend -p 3000:3000 $FRONTEND_IMAGE'
+                }
             }
-        }
-    }
-
-    post {
-        success {
-            echo '🚀 Deployed Successfully!'
-        }
-        failure {
-            echo '❌ Deployment Failed.'
         }
     }
 }
