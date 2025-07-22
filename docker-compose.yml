@@ -12,7 +12,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8090:8080"
+      - "8090:8080"  # ✅ Traefik dashboard (avoid 8080 for Adminer)
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
@@ -45,6 +45,8 @@ services:
       - default
     depends_on:
       - db
+    ports:
+      - "8081:8080"  # ✅ Avoid conflict with Traefik dashboard
     environment:
       - ADMINER_DESIGN=pepa-linha-dark
     labels:
@@ -95,11 +97,11 @@ services:
   backend:
     image: '${DOCKER_IMAGE_BACKEND:-backend}:${TAG:-latest}'
     restart: always
-    build:
-      context: ./backend
     networks:
       - traefik-public
       - default
+    build:
+      context: ./backend
     depends_on:
       db:
         condition: service_healthy
@@ -146,14 +148,14 @@ services:
   frontend:
     image: '${DOCKER_IMAGE_FRONTEND:-frontend}:${TAG:-latest}'
     restart: always
+    networks:
+      - traefik-public
+      - default
     build:
       context: ./frontend
       args:
         - VITE_API_URL=https://api.${DOMAIN}
         - NODE_ENV=production
-    networks:
-      - traefik-public
-      - default
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
@@ -168,7 +170,7 @@ services:
       - traefik.http.routers.${STACK_NAME}-frontend-https.tls.certresolver=le
 
 volumes:
-  app-db-data: {}
+  app-db-data:
 
 networks:
   traefik-public:
